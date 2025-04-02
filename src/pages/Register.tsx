@@ -42,16 +42,16 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 to-purple-50 dark:from-purple-900 dark:to-slate-900 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">TechZ</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent">TechZ</h1>
           <p className="text-muted-foreground mt-2">MCQ Exam Platform</p>
         </div>
         
-        <Card>
+        <Card className="border-purple-200 shadow-xl dark:border-purple-800 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Create Account</CardTitle>
+            <CardTitle className="text-purple-800 dark:text-purple-200">Create Account</CardTitle>
             <CardDescription>
               Enter your details to create a new account
             </CardDescription>
@@ -66,6 +66,7 @@ const Register = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
               
@@ -78,6 +79,7 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
               
@@ -89,6 +91,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
               
@@ -100,20 +103,21 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col">
               <Button 
                 type="submit" 
-                className="w-full mb-4"
+                className="w-full mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                 disabled={isLoading}
               >
                 {isLoading ? 'Creating account...' : 'Create Account'}
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Already have an account?{" "}
-                <Link to="/login" className="text-primary hover:underline">
+                <Link to="/login" className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 hover:underline">
                   Sign in
                 </Link>
               </p>

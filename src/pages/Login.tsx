@@ -30,16 +30,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 to-purple-50 dark:from-purple-900 dark:to-slate-900 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">TechZ</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent">TechZ</h1>
           <p className="text-muted-foreground mt-2">MCQ Exam Platform</p>
         </div>
         
-        <Card>
+        <Card className="border-purple-200 shadow-xl dark:border-purple-800 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
+            <CardTitle className="text-purple-800 dark:text-purple-200">Sign In</CardTitle>
             <CardDescription>
               Enter your credentials to access your account
             </CardDescription>
@@ -55,6 +55,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
               <div className="space-y-2">
@@ -67,10 +68,11 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="border-purple-200 focus:border-purple-500 dark:border-purple-900"
                 />
               </div>
 
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground bg-purple-50/50 dark:bg-purple-900/20 p-3 rounded-md">
                 <p>Demo credentials:</p>
                 <p>Admin: admin@techz.com / admin123</p>
                 <p>Instructor: instructor@techz.com / instructor123</p>
@@ -80,14 +82,14 @@ const Login = () => {
             <CardFooter className="flex flex-col">
               <Button 
                 type="submit" 
-                className="w-full mb-4"
+                className="w-full mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                 disabled={isLoading}
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-primary hover:underline">
+                <Link to="/register" className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 hover:underline">
                   Sign up
                 </Link>
               </p>
