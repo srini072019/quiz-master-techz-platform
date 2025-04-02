@@ -11,6 +11,7 @@ import { DataProvider } from "./contexts/DataContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Subjects from "./pages/Subjects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,15 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/subjects" element={<Subjects />} />
+              {/* These routes need to be created but we'll add them to prevent 404 errors */}
+              <Route path="/questions" element={<NotFound />} />
+              <Route path="/courses" element={<NotFound />} />
+              <Route path="/exams" element={<NotFound />} />
+              <Route path="/users" element={<NotFound />} />
+              <Route path="/my-courses" element={<NotFound />} />
+              <Route path="/my-exams" element={<NotFound />} />
+              <Route path="/profile" element={<NotFound />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
