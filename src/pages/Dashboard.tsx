@@ -71,10 +71,10 @@ const Dashboard = () => {
           />
           
           <StatCard
-            title="Users"
+            title="Candidates"
             value="3" // Mock data for now
             icon={<Users className="h-5 w-5" />}
-            linkTo="/users"
+            linkTo="/candidates"
             color="text-emerald-600"
           />
           

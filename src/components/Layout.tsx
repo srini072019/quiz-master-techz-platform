@@ -77,8 +77,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               </NavItem>
               
               {currentUser.role === 'admin' && (
-                <NavItem to="/users" icon={<Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />}>
-                  Users
+                <NavItem to="/candidates" icon={<Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />}>
+                  Candidates
                 </NavItem>
               )}
             </>
