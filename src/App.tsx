@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Subjects from "./pages/Subjects";
 import Questions from "./pages/Questions";
 import Candidates from "./pages/Candidates";
+import Exams from "./pages/Exams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,9 +35,9 @@ const App = () => (
               <Route path="/subjects" element={<Subjects />} />
               <Route path="/questions" element={<Questions />} />
               <Route path="/candidates" element={<Candidates />} />
+              <Route path="/exams" element={<Exams />} />
               {/* These routes need to be created but we'll add them to prevent 404 errors */}
               <Route path="/courses" element={<NotFound />} />
-              <Route path="/exams" element={<NotFound />} />
               <Route path="/my-courses" element={<NotFound />} />
               <Route path="/my-exams" element={<NotFound />} />
               <Route path="/profile" element={<NotFound />} />
