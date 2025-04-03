@@ -30,60 +30,18 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-purple-200 to-purple-50 dark:from-purple-900 dark:to-slate-900">
-      {/* Left Side - Technical Skills Visualization */}
-      <div className="hidden md:flex md:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-purple-600/10 backdrop-blur-sm"></div>
-        <div className="relative z-10 max-w-md text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent mb-6">
+      {/* Left Side - Large Stock Image */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-purple-600/10 backdrop-blur-sm z-10"></div>
+        <img 
+          src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" 
+          alt="Technology Background" 
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent p-4 backdrop-blur-sm bg-white/10 rounded-xl">
             TechZ MCQ Platform
           </h1>
-          
-          {/* Tech Images Grid - These are placeholders for AI-generated images */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            {/* Web Development Image */}
-            <div className="bg-white/80 dark:bg-purple-900/50 p-4 rounded-lg shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform">
-              <div className="h-40 w-full overflow-hidden rounded-md">
-                <img 
-                  src="/placeholder-web-dev.png" 
-                  alt="Web Development" 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-            
-            {/* Programming Image */}
-            <div className="bg-white/80 dark:bg-purple-900/50 p-4 rounded-lg shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform">
-              <div className="h-40 w-full overflow-hidden rounded-md">
-                <img 
-                  src="/placeholder-programming.png" 
-                  alt="Programming" 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-            
-            {/* Database Image */}
-            <div className="bg-white/80 dark:bg-purple-900/50 p-4 rounded-lg shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform">
-              <div className="h-40 w-full overflow-hidden rounded-md">
-                <img 
-                  src="/placeholder-database.png" 
-                  alt="Database" 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-            
-            {/* DevOps Image */}
-            <div className="bg-white/80 dark:bg-purple-900/50 p-4 rounded-lg shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform">
-              <div className="h-40 w-full overflow-hidden rounded-md">
-                <img 
-                  src="/placeholder-devops.png" 
-                  alt="DevOps" 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
