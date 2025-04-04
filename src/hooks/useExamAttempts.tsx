@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ExamAttempt } from '../types';
 import { ExamAttemptsContextType } from '../contexts/types';
 import { 
-  fetchExamAttempts, 
+  fetchExamAttempts,
   startExamAttemptService,
   submitExamAttemptService
 } from '../services/ExamAttemptsService';

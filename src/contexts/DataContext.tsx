@@ -956,7 +956,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.error('Error starting exam attempt:', error);
       toast({ 
         title: "Error starting exam",
-        description: "There was an error starting the exam."
+        description: "There was an error starting the exam.",
+        variant: "destructive" 
       });
       throw error;
     }
@@ -1005,5 +1006,3 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           if (selectedOption && selectedOption.isCorrect) {
             correctAnswers++;
           }
-        }
-      });
