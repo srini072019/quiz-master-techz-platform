@@ -985,3 +985,4 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.error('Error starting exam attempt:', error);
       toast({ 
         title: "Error starting exam",
+        description:
