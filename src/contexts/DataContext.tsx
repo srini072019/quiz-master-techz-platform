@@ -1004,4 +1004,3 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (question) {
           const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
           if (selectedOption && selectedOption.isCorrect) {
-            correct
