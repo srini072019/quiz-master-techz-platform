@@ -126,7 +126,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       const coursesWithRelationships = coursesData.map(course => {
         const courseSubjects = courseSubjectsData
           .filter(cs => cs.course_id === course.id)
-          .map(cs => cs.subject_id);
+          .map(cs => cs.subject_id);\
         
         const courseParticipants = courseParticipantsData
           .filter(cp => cp.course_id === course.id)
@@ -1005,3 +1005,4 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
           if (selectedOption && selectedOption.isCorrect) {
             correctAnswers++;
+          }
