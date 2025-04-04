@@ -215,8 +215,7 @@ export function useCoursesHook(): CoursesContextType {
     if (!currentUser) return;
     
     try {
-      // We'll need to check this at the DataContextRefactored level
-      // since we need access to exams
+      // We'll handle the exam check in DataContextRefactored
       const courseToDelete = courses.find(c => c.id === id);
       if (!courseToDelete) return;
       

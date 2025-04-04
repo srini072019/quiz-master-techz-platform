@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Exam } from '../types';
+import { Exam, DifficultyLevel } from '../types';
 import { ExamsContextType } from '../contexts/types';
 import { toast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,7 +46,7 @@ export function useExamsHook(): ExamsContextType {
           .map(es => ({
             subjectId: es.subject_id,
             questionCount: es.question_count,
-            difficulty: es.difficulty
+            difficulty: es.difficulty as DifficultyLevel | "mixed"
           }));
         
         const examParticipants = examParticipantsData

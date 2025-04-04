@@ -1,71 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ExamAttempt, MCQQuestion } from '../types';
-import { toast } from '../hooks/use-toast';
-
-export async function fetchExamAttempts(userId: string): Promise<ExamAttempt[]> {
-  try {
-    // Get exam attempts for the user
-    const { data: attemptsData, error: attemptsError } = await supabase
-      .from('exam_attempts')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (attemptsError) {
-      console.error('Error fetching exam attempts:', attemptsError);
-      return [];
-    }
-    
-    // Get answers for these attempts
-    const attemptIds = attemptsData.map(attempt => attempt.id);
-    
-    let answersData: any[] = [];
-    if (attemptIds.length > 0) {
-      const { data, error } = await supabase
-        .from('attempt_answers')
-        .select('*')
-        .in('attempt_id', attemptIds);
-      
-      if (error) {
-        console.error('Error fetching attempt answers:', error);
-      } else {
-        answersData = data || [];
-      }
-    }
-    
-    // Map answers to attempts
-    return attemptsData.map(attempt => {
-      const attemptAnswers = answersData
-        .filter(answer => answer.attempt_id === attempt.id)
-        .map(answer => ({
-          questionId: answer.question_id,
-          selectedOptionId: answer.selected_option_id
-        }));
-      
-      return {
-        id: attempt.id,
-        examId: attempt.exam_id,
-        userId: attempt.user_id,
-        startTime: new Date(attempt.start_time),
-        endTime: attempt.end_time ? new Date(attempt.end_time) : undefined,
-        score: attempt.score,
-        passed: attempt.passed,
-        answers: attemptAnswers
-      };
-    });
-  } catch (error) {
-    console.error('Error in fetchExamAttempts:', error);
-    return [];
-  }
-}
+import { MCQQuestion } from '@/types';
 
 export async function startExamAttemptService(
   examId: string, 
-  userId: string, 
+  userId: string,
   examName: string
 ): Promise<string> {
   try {
-    // Check if user already has an ongoing attempt
+    // Check if there's an existing attempt
     const { data: existingAttempts, error: checkError } = await supabase
       .from('exam_attempts')
       .select('*')
@@ -79,11 +22,11 @@ export async function startExamAttemptService(
     }
     
     if (existingAttempts) {
-      toast({ title: "Resuming exam", description: `Continuing your existing attempt for ${examName}.` });
+      console.log('Resuming existing attempt:', existingAttempts.id);
       return existingAttempts.id;
     }
     
-    // Create new attempt
+    // Create a new attempt
     const { data, error } = await supabase
       .from('exam_attempts')
       .insert({
@@ -95,15 +38,11 @@ export async function startExamAttemptService(
       .single();
     
     if (error) throw error;
+    console.log('New attempt created:', data.id, 'for exam:', examName);
     
-    toast({ title: "Exam started", description: `${examName} has begun.` });
     return data.id;
   } catch (error) {
     console.error('Error starting exam attempt:', error);
-    toast({ 
-      title: "Error starting exam", 
-      description: "There was an error starting the exam."
-    });
     throw error;
   }
 }
@@ -116,7 +55,7 @@ export async function submitExamAttemptService(
   passingPercentage: number
 ): Promise<{ score: number, passed: boolean }> {
   try {
-    // First, record the answers in the database
+    // Record answers in database
     await Promise.all(answers.map(answer => supabase
       .from('attempt_answers')
       .insert({
@@ -138,36 +77,25 @@ export async function submitExamAttemptService(
       }
     });
     
-    const score = examQuestions.length > 0 
-      ? (correctAnswers / examQuestions.length) * 100 
-      : 0;
-    
+    const totalQuestions = answers.length;
+    const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
     const passed = score >= passingPercentage;
     
-    // Update the attempt to mark it as completed
-    const { error } = await supabase
+    // Update attempt with score and end time
+    const { error: updateError } = await supabase
       .from('exam_attempts')
       .update({
         end_time: new Date().toISOString(),
-        score,
-        passed
+        score: score,
+        passed: passed
       })
       .eq('id', attemptId);
     
-    if (error) throw error;
-    
-    toast({ 
-      title: passed ? "Exam Passed!" : "Exam Completed", 
-      description: `Score: ${score.toFixed(2)}%` 
-    });
+    if (updateError) throw updateError;
     
     return { score, passed };
   } catch (error) {
     console.error('Error submitting exam attempt:', error);
-    toast({ 
-      title: "Error submitting exam", 
-      description: "There was an error submitting your exam answers." 
-    });
     throw error;
   }
 }
