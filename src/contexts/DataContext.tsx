@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { 
@@ -1004,3 +1005,115 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (question) {
           const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
           if (selectedOption && selectedOption.isCorrect) {
+            correctAnswers++;
+          }
+        }
+      });
+      
+      const totalQuestions = answers.length;
+      const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+      const passed = score >= exam.passingPercentage;
+      
+      // Update attempt with score and end time
+      const { error: updateError } = await supabase
+        .from('exam_attempts')
+        .update({
+          end_time: new Date().toISOString(),
+          score: score,
+          passed: passed
+        })
+        .eq('id', attemptId);
+      
+      if (updateError) throw updateError;
+      
+      // Update local state
+      setExamAttempts(prevAttempts => 
+        prevAttempts.map(a => {
+          if (a.id === attemptId) {
+            return {
+              ...a,
+              endTime: new Date(),
+              score: score,
+              passed: passed,
+              answers: answers
+            };
+          }
+          return a;
+        })
+      );
+      
+      // Show toast notification with result
+      toast({
+        title: passed ? "Exam Passed!" : "Exam Failed",
+        description: `Your score: ${score.toFixed(1)}%. ${passed ? 'Congratulations!' : 'Please try again.'}`,
+        variant: passed ? "default" : "destructive"
+      });
+      
+    } catch (error) {
+      console.error('Error submitting exam attempt:', error);
+      toast({
+        title: "Error submitting exam",
+        description: "There was an error submitting your exam answers.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Create context value
+  const contextValue: DataContextType = {
+    subjects,
+    questions,
+    courses,
+    exams,
+    examAttempts,
+    
+    // Subject operations
+    addSubject,
+    updateSubject,
+    deleteSubject,
+    
+    // Question operations
+    addQuestion,
+    updateQuestion,
+    deleteQuestion,
+    
+    // Course operations
+    addCourse,
+    updateCourse,
+    deleteCourse,
+    
+    // Exam operations
+    addExam,
+    updateExam,
+    deleteExam,
+    
+    // Exam attempt operations
+    startExamAttempt,
+    submitExamAttempt,
+    
+    // Helper functions
+    getSubjectById: (id) => subjects.find(s => s.id === id),
+    getQuestionById: (id) => questions.find(q => q.id === id),
+    getCourseById: (id) => courses.find(c => c.id === id),
+    getExamById: (id) => exams.find(e => e.id === id),
+    getExamAttemptsForUser: (userId) => examAttempts.filter(a => a.userId === userId),
+    getExamAttemptsForExam: (examId) => examAttempts.filter(a => a.examId === examId),
+    getQuestionsForSubject: (subjectId) => questions.filter(q => q.subjectId === subjectId),
+    getExamsForCourse: (courseId) => exams.filter(e => e.courseId === courseId),
+    getQuestionsForExam
+  };
+
+  return (
+    <DataContext.Provider value={contextValue}>
+      {children}
+    </DataContext.Provider>
+  );
+}
+
+export function useData() {
+  const context = useContext(DataContext);
+  if (context === undefined) {
+    throw new Error('useData must be used within a DataProvider');
+  }
+  return context;
+}
