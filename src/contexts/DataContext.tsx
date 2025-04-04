@@ -126,7 +126,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       const coursesWithRelationships = coursesData.map(course => {
         const courseSubjects = courseSubjectsData
           .filter(cs => cs.course_id === course.id)
-          .map(cs => cs.subject_id);\
+          .map(cs => cs.subject_id); // Fixed: removed extra backslash
         
         const courseParticipants = courseParticipantsData
           .filter(cp => cp.course_id === course.id)
@@ -970,7 +970,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return getQuestionsForExamService(examId, questions);
   };
   
-  // Add the missing submitExamAttempt function
+  // Complete the submitExamAttempt function
   const submitExamAttempt = async (
     attemptId: string, 
     answers: { questionId: string, selectedOptionId: string }[]
@@ -1004,5 +1004,4 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (question) {
           const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
           if (selectedOption && selectedOption.isCorrect) {
-            correctAnswers++;
-          }
+            correct
