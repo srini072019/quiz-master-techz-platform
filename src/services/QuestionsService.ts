@@ -1,26 +1,32 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { MCQQuestion, MCQOption, DifficultyLevel } from '../types';
+import { MCQQuestion, MCQOption, DifficultyLevel, ExamSubject } from '../types';
 import { toast } from '../hooks/use-toast';
 
-export const fetchQuestions = async (): Promise<MCQQuestion[]> => {
+export async function fetchQuestions(): Promise<MCQQuestion[]> {
   try {
     // First get questions
     const { data: questionData, error: questionError } = await supabase
       .from('mcq_questions')
       .select('*');
     
-    if (questionError) throw questionError;
+    if (questionError) {
+      console.error('Error fetching questions:', questionError);
+      return [];
+    }
     
     // Then get options for all questions
     const { data: optionsData, error: optionsError } = await supabase
       .from('mcq_options')
       .select('*');
     
-    if (optionsError) throw optionsError;
+    if (optionsError) {
+      console.error('Error fetching question options:', optionsError);
+      return [];
+    }
     
     // Map options to their questions
-    const questionsWithOptions = questionData.map(question => {
+    return questionData.map(question => {
       const questionOptions = optionsData
         .filter(option => option.question_id === question.id)
         .map(option => ({
@@ -39,18 +45,16 @@ export const fetchQuestions = async (): Promise<MCQQuestion[]> => {
         createdAt: new Date(question.created_at)
       };
     });
-    
-    return questionsWithOptions;
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error('Error in fetchQuestions:', error);
     return [];
   }
-};
+}
 
-export const addQuestionService = async (
-  question: Omit<MCQQuestion, 'id' | 'createdAt' | 'createdById'>,
+export async function addQuestionService(
+  question: Omit<MCQQuestion, 'id' | 'createdAt' | 'createdById'>, 
   userId: string
-): Promise<MCQQuestion | null> => {
+): Promise<MCQQuestion | null> {
   try {
     // First, insert the question
     const { data: questionData, error: questionError } = await supabase
@@ -108,19 +112,19 @@ export const addQuestionService = async (
     });
     return null;
   }
-};
+}
 
-export const updateQuestionService = async (updatedQuestion: MCQQuestion): Promise<boolean> => {
+export async function updateQuestionService(question: MCQQuestion): Promise<boolean> {
   try {
     // Update the question
     const { error: questionError } = await supabase
       .from('mcq_questions')
       .update({
-        text: updatedQuestion.text,
-        subject_id: updatedQuestion.subjectId,
-        difficulty: updatedQuestion.difficulty
+        text: question.text,
+        subject_id: question.subjectId,
+        difficulty: question.difficulty
       })
-      .eq('id', updatedQuestion.id);
+      .eq('id', question.id);
     
     if (questionError) throw questionError;
     
@@ -128,13 +132,13 @@ export const updateQuestionService = async (updatedQuestion: MCQQuestion): Promi
     const { error: deleteError } = await supabase
       .from('mcq_options')
       .delete()
-      .eq('question_id', updatedQuestion.id);
+      .eq('question_id', question.id);
     
     if (deleteError) throw deleteError;
     
     // Insert updated options
-    const optionsToInsert = updatedQuestion.options.map(option => ({
-      question_id: updatedQuestion.id,
+    const optionsToInsert = question.options.map(option => ({
+      question_id: question.id,
       text: option.text,
       is_correct: option.isCorrect
     }));
@@ -156,11 +160,11 @@ export const updateQuestionService = async (updatedQuestion: MCQQuestion): Promi
     });
     return false;
   }
-};
+}
 
-export const deleteQuestionService = async (id: string): Promise<boolean> => {
+export async function deleteQuestionService(id: string): Promise<boolean> {
   try {
-    // Delete the question (cascading will handle options)
+    // Delete the question (cascade will handle options)
     const { error } = await supabase
       .from('mcq_questions')
       .delete()
@@ -179,82 +183,51 @@ export const deleteQuestionService = async (id: string): Promise<boolean> => {
     });
     return false;
   }
-};
+}
 
-export const getQuestionsForExamService = async (
+// New function to get questions for an exam
+export async function getQuestionsForExamService(
   examId: string, 
-  examSubjects: { subjectId: string, questionCount: number, difficulty: string }[],
   allQuestions: MCQQuestion[]
-): Promise<MCQQuestion[]> => {
-  let examQuestions: MCQQuestion[] = [];
-  
+): Promise<MCQQuestion[]> {
   try {
-    for (const subject of examSubjects) {
+    // First fetch exam subjects configuration
+    const { data: examSubjectsData, error: examSubjectsError } = await supabase
+      .from('exam_subjects')
+      .select('*')
+      .eq('exam_id', examId);
+    
+    if (examSubjectsError) {
+      console.error('Error fetching exam subjects:', examSubjectsError);
+      return [];
+    }
+    
+    // Map to ExamSubject type
+    const examSubjects: ExamSubject[] = examSubjectsData.map(es => ({
+      subjectId: es.subject_id,
+      questionCount: es.question_count,
+      difficulty: es.difficulty as DifficultyLevel
+    }));
+    
+    // Get questions for each subject based on configuration
+    let examQuestions: MCQQuestion[] = [];
+    
+    for (const examSubject of examSubjects) {
       const subjectQuestions = allQuestions.filter(q => 
-        q.subjectId === subject.subjectId && 
-        (subject.difficulty === 'mixed' || q.difficulty === subject.difficulty as DifficultyLevel)
+        q.subjectId === examSubject.subjectId && 
+        q.difficulty === examSubject.difficulty
       );
       
-      // If we don't have enough questions cached, fetch more from the database
-      if (subjectQuestions.length < subject.questionCount) {
-        const { data, error } = await supabase
-          .from('mcq_questions')
-          .select('*')
-          .eq('subject_id', subject.subjectId)
-          .eq('difficulty', subject.difficulty === 'mixed' ? undefined : subject.difficulty)
-          .limit(subject.questionCount);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Fetch options for these questions
-          const questionIds = data.map(q => q.id);
-          const { data: optionsData, error: optionsError } = await supabase
-            .from('mcq_options')
-            .select('*')
-            .in('question_id', questionIds);
-          
-          if (optionsError) throw optionsError;
-          
-          const fetchedQuestions = data.map(question => {
-            const questionOptions = optionsData
-              .filter(option => option.question_id === question.id)
-              .map(option => ({
-                id: option.id,
-                text: option.text,
-                isCorrect: option.is_correct
-              }));
-            
-            return {
-              id: question.id,
-              text: question.text,
-              options: questionOptions,
-              difficulty: question.difficulty as DifficultyLevel,
-              subjectId: question.subject_id,
-              createdById: question.created_by_id,
-              createdAt: new Date(question.created_at)
-            };
-          });
-          
-          // Use fetched questions for this subject
-          const randomizedQuestions = [...fetchedQuestions].sort(() => Math.random() - 0.5);
-          examQuestions = [...examQuestions, ...randomizedQuestions.slice(0, subject.questionCount)];
-        }
-      } else {
-        // We have enough cached questions, just randomize and take what we need
-        const randomizedQuestions = [...subjectQuestions].sort(() => Math.random() - 0.5);
-        examQuestions = [...examQuestions, ...randomizedQuestions.slice(0, subject.questionCount)];
-      }
+      // Shuffle questions and pick the required count
+      const shuffled = [...subjectQuestions].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, examSubject.questionCount);
+      
+      examQuestions = [...examQuestions, ...selected];
     }
     
     return examQuestions;
   } catch (error) {
-    console.error('Error getting questions for exam:', error);
-    toast({
-      title: "Error loading exam questions",
-      description: "There was an error loading the exam questions.",
-      variant: "destructive"
-    });
+    console.error('Error in getQuestionsForExamService:', error);
     return [];
   }
-};
+}

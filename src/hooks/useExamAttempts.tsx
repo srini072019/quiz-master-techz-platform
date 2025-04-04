@@ -25,22 +25,18 @@ export function useExamAttempts(): ExamAttemptsContextType {
     setExamAttempts(data);
   };
   
-  // This is a placeholder implementation since it will need to access the exams context
+  // These functions are overridden in DataContextRefactored.tsx
   const startExamAttempt = async (examId: string): Promise<string> => {
     if (!currentUser) throw new Error("User not authenticated");
-    
-    // This will be implemented when we integrate the contexts
     return '';
   };
   
-  // This is a placeholder implementation since it will need to access the questions context
   const submitExamAttempt = async (
     attemptId: string, 
     answers: { questionId: string, selectedOptionId: string }[]
   ) => {
     if (!currentUser) return;
-    
-    // This will be implemented when we integrate the contexts
+    // This will be implemented in DataContextRefactored.tsx
   };
   
   const getExamAttemptsForUser = (userId: string) => {

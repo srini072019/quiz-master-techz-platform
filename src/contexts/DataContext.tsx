@@ -12,37 +12,8 @@ import {
 } from '../types';
 import { toast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-interface DataContextType {
-  subjects: Subject[];
-  questions: MCQQuestion[];
-  courses: Course[];
-  exams: Exam[];
-  examAttempts: ExamAttempt[];
-  addSubject: (subject: Omit<Subject, 'id' | 'createdAt' | 'createdById'>) => void;
-  updateSubject: (subject: Subject) => void;
-  deleteSubject: (id: string) => void;
-  addQuestion: (question: Omit<MCQQuestion, 'id' | 'createdAt' | 'createdById'>) => void;
-  updateQuestion: (question: MCQQuestion) => void;
-  deleteQuestion: (id: string) => void;
-  addCourse: (course: Omit<Course, 'id' | 'createdAt' | 'createdById'>) => void;
-  updateCourse: (course: Course) => void;
-  deleteCourse: (id: string) => void;
-  addExam: (exam: Omit<Exam, 'id' | 'createdAt' | 'createdById'>) => void;
-  updateExam: (exam: Exam) => void;
-  deleteExam: (id: string) => void;
-  startExamAttempt: (examId: string) => Promise<string>;
-  submitExamAttempt: (attemptId: string, answers: { questionId: string, selectedOptionId: string }[]) => void;
-  getSubjectById: (id: string) => Subject | undefined;
-  getQuestionById: (id: string) => MCQQuestion | undefined;
-  getCourseById: (id: string) => Course | undefined;
-  getExamById: (id: string) => Exam | undefined;
-  getExamAttemptsForUser: (userId: string) => ExamAttempt[];
-  getExamAttemptsForExam: (examId: string) => ExamAttempt[];
-  getQuestionsForSubject: (subjectId: string) => MCQQuestion[];
-  getExamsForCourse: (courseId: string) => Exam[];
-  getQuestionsForExam: (examId: string) => Promise<MCQQuestion[]>;
-}
+import { DataContextType } from './types';
+import { getQuestionsForExamService } from '../services/QuestionsService';
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
@@ -236,7 +207,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.error('Error fetching exams:', error);
     }
   };
-
+  
   const fetchExamAttempts = async () => {
     if (!currentUser) return;
     
@@ -985,4 +956,54 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.error('Error starting exam attempt:', error);
       toast({ 
         title: "Error starting exam",
-        description:
+        description: "There was an error starting the exam."
+      });
+      throw error;
+    }
+  };
+
+  // Add the missing getQuestionsForExam function
+  const getQuestionsForExam = async (examId: string): Promise<MCQQuestion[]> => {
+    const exam = exams.find(e => e.id === examId);
+    if (!exam) return [];
+    return getQuestionsForExamService(examId, questions);
+  };
+  
+  // Add the missing submitExamAttempt function
+  const submitExamAttempt = async (
+    attemptId: string, 
+    answers: { questionId: string, selectedOptionId: string }[]
+  ) => {
+    if (!currentUser) return;
+    
+    const attempt = examAttempts.find(a => a.id === attemptId);
+    if (!attempt) return;
+    
+    const exam = exams.find(e => e.id === attempt.examId);
+    if (!exam) return;
+    
+    try {
+      // First, record the answers in the database
+      await Promise.all(answers.map(answer => supabase
+        .from('attempt_answers')
+        .insert({
+          attempt_id: attemptId,
+          question_id: answer.questionId,
+          selected_option_id: answer.selectedOptionId
+        })
+      ));
+      
+      // Then get the exam questions
+      const examQuestions = await getQuestionsForExam(attempt.examId);
+      
+      // Calculate score
+      let correctAnswers = 0;
+      answers.forEach(answer => {
+        const question = examQuestions.find(q => q.id === answer.questionId);
+        if (question) {
+          const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
+          if (selectedOption && selectedOption.isCorrect) {
+            correctAnswers++;
+          }
+        }
+      });

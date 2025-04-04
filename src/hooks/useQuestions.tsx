@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { MCQQuestion } from '../types';
+import { MCQQuestion, DifficultyLevel } from '../types';
 import { QuestionsContextType } from '../contexts/types';
 import { 
   fetchQuestions, 
@@ -40,14 +40,16 @@ export function useQuestions(): QuestionsContextType {
     
     const success = await updateQuestionService(question);
     if (success) {
-      // Instead of directly updating state, refresh all questions
-      // to ensure we get new option IDs from the database
+      // For questions, we reload them to get the updated option IDs
       await loadQuestions();
     }
   };
   
   const deleteQuestion = async (id: string) => {
     if (!currentUser) return;
+    
+    const questionToDelete = questions.find(q => q.id === id);
+    if (!questionToDelete) return;
     
     const success = await deleteQuestionService(id);
     if (success) {
@@ -62,13 +64,9 @@ export function useQuestions(): QuestionsContextType {
   const getQuestionsForSubject = (subjectId: string) => {
     return questions.filter(question => question.subjectId === subjectId);
   };
-  
-  const getQuestionsForExam = async (examId: string): Promise<MCQQuestion[]> => {
-    if (!currentUser) return [];
-    
-    // This will be implemented using the appropriate context that has access to exams
-    // For now, we'll return an empty array
-    return [];
+
+  const getQuestionsForExam = async (examId: string) => {
+    return getQuestionsForExamService(examId, questions);
   };
   
   return {

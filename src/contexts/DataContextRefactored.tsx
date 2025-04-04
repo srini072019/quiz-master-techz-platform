@@ -6,7 +6,7 @@ import { useQuestions } from '../hooks/useQuestions';
 import { useCourses } from '../hooks/useCourses';
 import { useExams } from '../hooks/useExams';
 import { useExamAttempts } from '../hooks/useExamAttempts';
-import { MCQQuestion, Exam, ExamSubject } from '../types';
+import { MCQQuestion } from '../types';
 import { getQuestionsForExamService } from '../services/QuestionsService';
 import { startExamAttemptService, submitExamAttemptService } from '../services/ExamAttemptsService';
 import { useAuth } from './AuthContext';
@@ -29,7 +29,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     
     return getQuestionsForExamService(
       examId, 
-      exam.subjects, 
       questionsHook.questions
     );
   };

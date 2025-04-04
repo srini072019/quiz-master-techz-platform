@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExamAttempt, MCQQuestion } from '../types';
 import { toast } from '../hooks/use-toast';
 
-export const fetchExamAttempts = async (userId: string): Promise<ExamAttempt[]> => {
+export async function fetchExamAttempts(userId: string): Promise<ExamAttempt[]> {
   try {
     // Get exam attempts for the user
     const { data: attemptsData, error: attemptsError } = await supabase
@@ -11,7 +11,10 @@ export const fetchExamAttempts = async (userId: string): Promise<ExamAttempt[]> 
       .select('*')
       .eq('user_id', userId);
     
-    if (attemptsError) throw attemptsError;
+    if (attemptsError) {
+      console.error('Error fetching exam attempts:', attemptsError);
+      return [];
+    }
     
     // Get answers for these attempts
     const attemptIds = attemptsData.map(attempt => attempt.id);
@@ -23,12 +26,15 @@ export const fetchExamAttempts = async (userId: string): Promise<ExamAttempt[]> 
         .select('*')
         .in('attempt_id', attemptIds);
       
-      if (error) throw error;
-      answersData = data || [];
+      if (error) {
+        console.error('Error fetching attempt answers:', error);
+      } else {
+        answersData = data || [];
+      }
     }
     
     // Map answers to attempts
-    const attemptsWithAnswers = attemptsData.map(attempt => {
+    return attemptsData.map(attempt => {
       const attemptAnswers = answersData
         .filter(answer => answer.attempt_id === attempt.id)
         .map(answer => ({
@@ -47,19 +53,17 @@ export const fetchExamAttempts = async (userId: string): Promise<ExamAttempt[]> 
         answers: attemptAnswers
       };
     });
-    
-    return attemptsWithAnswers;
   } catch (error) {
-    console.error('Error fetching exam attempts:', error);
+    console.error('Error in fetchExamAttempts:', error);
     return [];
   }
-};
+}
 
-export const startExamAttemptService = async (
-  examId: string,
-  userId: string,
+export async function startExamAttemptService(
+  examId: string, 
+  userId: string, 
   examName: string
-): Promise<string> => {
+): Promise<string> {
   try {
     // Check if user already has an ongoing attempt
     const { data: existingAttempts, error: checkError } = await supabase
@@ -75,6 +79,7 @@ export const startExamAttemptService = async (
     }
     
     if (existingAttempts) {
+      toast({ title: "Resuming exam", description: `Continuing your existing attempt for ${examName}.` });
       return existingAttempts.id;
     }
     
@@ -92,57 +97,55 @@ export const startExamAttemptService = async (
     if (error) throw error;
     
     toast({ title: "Exam started", description: `${examName} has begun.` });
-    
     return data.id;
   } catch (error) {
     console.error('Error starting exam attempt:', error);
     toast({ 
-      title: "Error starting exam",
-      description: "There was an error starting the exam attempt.",
-      variant: "destructive"
+      title: "Error starting exam", 
+      description: "There was an error starting the exam."
     });
     throw error;
   }
-};
+}
 
-export const submitExamAttemptService = async (
-  attemptId: string, 
-  examId: string, 
+export async function submitExamAttemptService(
+  attemptId: string,
+  examId: string,
   answers: { questionId: string, selectedOptionId: string }[],
   examQuestions: MCQQuestion[],
   passingPercentage: number
-): Promise<{score: number, passed: boolean}> => {
+): Promise<{ score: number, passed: boolean }> {
   try {
-    // Insert answers
-    if (answers.length > 0) {
-      const answersToInsert = answers.map(answer => ({
+    // First, record the answers in the database
+    await Promise.all(answers.map(answer => supabase
+      .from('attempt_answers')
+      .insert({
         attempt_id: attemptId,
         question_id: answer.questionId,
         selected_option_id: answer.selectedOptionId
-      }));
-      
-      const { error: answersError } = await supabase
-        .from('attempt_answers')
-        .insert(answersToInsert);
-      
-      if (answersError) throw answersError;
-    }
+      })
+    ));
     
     // Calculate score
-    const correctAnswersCount = answers.filter(answer => {
+    let correctAnswers = 0;
+    answers.forEach(answer => {
       const question = examQuestions.find(q => q.id === answer.questionId);
-      if (!question) return false;
-      const correctOption = question.options.find(o => o.isCorrect);
-      return correctOption?.id === answer.selectedOptionId;
-    }).length;
+      if (question) {
+        const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
+        if (selectedOption && selectedOption.isCorrect) {
+          correctAnswers++;
+        }
+      }
+    });
     
-    const totalQuestions = examQuestions.length;
-    const score = totalQuestions > 0 ? (correctAnswersCount / totalQuestions) * 100 : 0;
+    const score = examQuestions.length > 0 
+      ? (correctAnswers / examQuestions.length) * 100 
+      : 0;
     
     const passed = score >= passingPercentage;
     
-    // Update attempt with end time, score and pass status
-    const { error: updateError } = await supabase
+    // Update the attempt to mark it as completed
+    const { error } = await supabase
       .from('exam_attempts')
       .update({
         end_time: new Date().toISOString(),
@@ -151,21 +154,20 @@ export const submitExamAttemptService = async (
       })
       .eq('id', attemptId);
     
-    if (updateError) throw updateError;
+    if (error) throw error;
     
-    toast({
-      title: "Exam submitted",
-      description: `You scored ${Math.round(score)}%. ${passed ? 'You passed!' : 'You did not pass.'}`
+    toast({ 
+      title: passed ? "Exam Passed!" : "Exam Completed", 
+      description: `Score: ${score.toFixed(2)}%` 
     });
     
     return { score, passed };
   } catch (error) {
     console.error('Error submitting exam attempt:', error);
-    toast({
-      title: "Error submitting exam",
-      description: "There was an error submitting your exam.",
-      variant: "destructive"
+    toast({ 
+      title: "Error submitting exam", 
+      description: "There was an error submitting your exam answers." 
     });
     throw error;
   }
-};
+}
